@@ -1,6 +1,6 @@
 ---
 title: "Mini Data-Analysis Deliverable 1"
-output: html_document
+output: github_document
 ---
 
 # Welcome to your (maybe) first-ever data analysis project!
@@ -21,6 +21,40 @@ devtools::install_github("UBC-MDS/datateachr")
 ```{r}
 library(datateachr)
 library(tidyverse)
+library(ggridges)
+library(scales)
+```
+2.1  Save ploting theme
+```{r}
+mi_tema <- function (...) {
+  ggplot2::theme_minimal() + 
+    ggplot2::theme(text = ggplot2::element_text(family = "Lato"), 
+                   axis.line = ggplot2::element_line(size = 0.3), 
+                   plot.title = ggplot2::element_text(hjust = 0.5,
+                                                      size = 14,
+                                                      face = "bold", 
+                                                      color = "grey20"), 
+                   plot.title.position = "plot", 
+                   plot.subtitle = ggplot2::element_text(hjust = 0.5,
+                                                         size = 12,
+                                                         color = "gray50"), 
+                   plot.caption = ggplot2::element_text(color = "gray50",
+                                                        size = 10, 
+                                                        hjust = 0),
+                   panel.grid = ggplot2::element_line(linetype = 2, 
+                                                      size = 0.3,
+                                                      color = "gray90"), 
+                   panel.grid.minor = ggplot2::element_blank(), 
+                   legend.key.width = unit(0.7, "cm"), 
+                   legend.margin = margin(0, 0, 0, 0), 
+                   legend.spacing = unit(0, "cm"),
+                   strip.background = ggplot2::element_rect(fill = "gray95", 
+                                                            linetype = "blank"), 
+                   panel.border = ggplot2::element_rect(color = "gray95", 
+                                                        fill = NA),
+                   rect = ggplot2::element_rect(fill = "transparent")) + 
+    ggplot2::theme(...)
+}
 ```
 
 3.  Make a repository in the <https://github.com/stat545ubc-2023> Organization. You can do this by following the steps found on canvas in the entry called [MDA: Create a repository](https://canvas.ubc.ca/courses/126199/pages/mda-create-a-repository). One completed, your repository should automatically be listed as part of the stat545ubc-2023 Organization.
@@ -86,10 +120,10 @@ And that is exactly the first thing that you will do!
 
 <!-------------------------- Start your work below ---------------------------->
 
-1: CHOICE_1_HERE\
-2: CHOICE_2_HERE\
-3: CHOICE_3_HERE\
-4: CHOICE_4_HERE
+1: **vancouver_trees**
+2: **steam_games**
+3: **building_permits**
+4: **apt_buildings**
 
 <!----------------------------------------------------------------------------->
 
@@ -100,8 +134,55 @@ And that is exactly the first thing that you will do!
 <!-------------------------- Start your work below ---------------------------->
 
 ```{r}
-### EXPLORE HERE ###
-steam_games
+## 1. First exploration of 'vancouver_trees' --------------
+# Db format
+class(vancouver_trees)
+
+# Db variables
+names(vancouver_trees)
+
+# Db structure 
+dim(vancouver_trees)
+
+glimpse(vancouver_trees)
+
+## 2. First exploration of 'steam_games' --------------
+# Db format
+class(steam_games)
+
+# Db variables
+names(steam_games)
+
+# Db structure 
+dim(steam_games)
+
+glimpse(steam_games)
+
+## 3. First exploration of 'building_permits' --------------
+# Db format
+class(building_permits)
+
+# Db variables
+names(building_permits)
+
+# Db structure 
+dim(building_permits)
+
+glimpse(building_permits)
+
+## 4. First exploration of 'apt_buildings' --------------
+# Db format
+class(apt_buildings)
+
+# Db variables
+names(apt_buildings)
+
+# Db structure 
+dim(apt_buildings)
+
+glimpse(apt_buildings)
+
+
 ```
 
 <!----------------------------------------------------------------------------->
@@ -109,13 +190,13 @@ steam_games
 1.3 **(1 point)** Now that you've explored the 4 datasets that you were initially most interested in, let's narrow it down to 1. What lead you to choose this one? Briefly explain your choice below.
 
 <!-------------------------- Start your work below ---------------------------->
-
+For this project, I've selected the **vancouver_trees** dataset. Upon examining its variables and overall structure, I became curious about the variation in grove structure across different neighborhoods. I started pondering questions like: What's the tree count per neighborhood? How does the species composition differ in each area? This led me to delve deeper into this topic.
 <!----------------------------------------------------------------------------->
 
 1.4 **(2 points)** Time for a final decision! Going back to the beginning, it's important to have an *end goal* in mind. For example, if I had chosen the `titanic` dataset for my project, I might've wanted to explore the relationship between survival and other variables. Try to think of 1 research question that you would want to answer with your dataset. Note it down below.
 
 <!-------------------------- Start your work below ---------------------------->
-
+My research question for this project is: What are the primary characteristics of the forest ecosystem in each neighborhood?
 <!----------------------------------------------------------------------------->
 
 # Important note
@@ -144,6 +225,100 @@ Make sure that you're using dplyr and ggplot2 rather than base R for this task. 
 2.2 **(4 points)** For each of the 4 exercises that you complete, provide a *brief explanation* of why you chose that exercise in relation to your data (in other words, why does it make sense to do that?), and sufficient comments for a reader to understand your reasoning and code.
 
 <!-------------------------- Start your work below ---------------------------->
+# Exploring Street Trees in Vancouver's Neighborhoods
+
+Vancouver is known for its deep-rooted connection with nature, but this relationship's specific details and extent need to be more widely understood. That's why this project sets out to delve into Vancouver's trees data sourced from the City's Open Data Portal. To accomplish this, the analysis is broken down into four sections, each dedicated to exploring an aspect of the trees in Vancouver.
+
+### Missing Values
+
+Upon inspecting the initial rows, it's evident that there are some missing values. However, the full extent of this missing data is yet unknown. To gain a better understanding of this dataset, the first step is to **visualize the missing values by variable**. This information can be represented using a barplot, where each variable is depicted as a separate bar.
+
+```{r message=FALSE, warning=FALSE}
+vancouver_trees %>% 
+  summarise_all(function(x){sum(ifelse(is.na(x), 1, 0))}) %>% 
+  pivot_longer(everything(),
+               names_to = "variable",
+               values_to = "missing_values") %>% 
+  ggplot(aes(x = reorder(variable, missing_values),
+             y = missing_values)) +
+  coord_flip() +
+  geom_col(fill = "#006D77") +
+  geom_text(aes(label = comma(missing_values)),
+               size = 3,
+            hjust = -0.1,
+               position_hor = F) +
+  scale_y_continuous(labels = comma,
+                     expand = expansion(mult = c(0, 0.2))) +
+  labs(title = "Missing Values by Variable",
+       x = "Variable",
+       y = "Number of missing values",
+       caption = "Source: The City of Vancouver's Open Data Portal.") +
+  mi_tema() 
+
+```
+
+### Tree Density Comparison
+
+When examining the tree population across Vancouver's neighborhoods, a straightforward approach might be to display the raw count in each area. However, this method can be misleading due to the different sizes of neighborhoods. Therefore, this section focuses on the density of trees per city block in each neighborhoods. Below, you will find the code that generates a **density plot** for this purpose (see Exercise 8).
+
+```{r message=FALSE, warning=FALSE}
+vancouver_trees %>% 
+  count(neighbourhood_name,
+        on_street, on_street_block) %>% 
+  ggplot(aes(x = n,
+             y = reorder(str_to_title(neighbourhood_name),
+                         -n))) +
+  geom_density_ridges(quantile_lines = T, 
+                      fill = "#006D77",
+                      alpha = 0.5,
+                      scale = 1.2,
+                      quantile_fun = mean) + 
+  labs(title = "Density distribution of trees by Neighborhoods",
+       x = "Number of trees by block",
+       y = element_blank(),
+       caption = "Source: The City of Vancouver's Open Data Portal.") +
+  scale_y_discrete(expand = expand_scale(mult = c(0.02, 0.1))) +
+  xlim(0, 50) +
+  mi_tema() 
+
+```
+
+
+### Life Span of Trees
+
+Another crucial aspect of trees is their age. Although the dataset doesn't directly provide this information, it can be estimated based on the planting date. Therefore, the following code chunk introduces a new variable that indicates the age of each tree.
+
+```{r message=FALSE, warning=FALSE}
+vancouver_trees <- vancouver_trees %>% 
+  mutate(age = as.numeric((today() - date_planted)/365))
+
+```
+
+
+### Diameter vs. Age
+
+There is often a **relation between a tree's diameter and its age**. To investigate this relationship, the following scatterplot compares the diameter and age of trees. This plot is particularly effective for this purpose as it enables us to quickly identify patterns.
+```{r message=FALSE, warning=FALSE}
+vancouver_trees %>%
+  mutate(species_recode = ifelse(n() > 5000,
+                                 str_to_title(species_name), "Others"),
+         .by = species_name) %>%  
+  ggplot(aes(x = age,
+             y = diameter)) +
+  geom_point(aes(color = species_recode),
+             size = 0.5,
+             alpha = 0.1) +
+  scale_y_log10(expand = expand_scale(mult = c(0.02, 0.1))) +
+  labs(title = "Relationship between tree's diameter and its age",
+       x = "Age",
+       y = "Diameter (inches)",
+       color = "Main species",
+       caption = "Source: The City of Vancouver's Open Data Portal.") +
+  guides(color = guide_legend(override.aes = list(size = 2,
+                                                  alpha = 0.8))) +
+  mi_tema() 
+
+```
 
 <!----------------------------------------------------------------------------->
 
@@ -152,6 +327,15 @@ Make sure that you're using dplyr and ggplot2 rather than base R for this task. 
 **(4 points)** So far, you have chosen a dataset and gotten familiar with it through exploring the data. You have also brainstormed one research question that interested you (Task 1.4). Now it's time to pick 4 research questions that you would like to explore in Milestone 2! Write the 4 questions and any additional comments below.
 
 <!--- *****START HERE***** --->
+Derived from the main research question (Task 1.4), the selected research questions are as follows:
+
+1. What is the most common species of tree in each neighborhood?
+
+2. What is the range of tree heights and how are diameters distributed across neighborhoods?
+
+3. How many trees have root barriers installed, and what is the distribution between neighborhoods?
+
+4. How many trees were planted in each decade, and how does this vary across neighborhoods?
 
 <!----------------------------->
 
