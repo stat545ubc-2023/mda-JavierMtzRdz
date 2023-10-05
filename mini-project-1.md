@@ -574,18 +574,15 @@ separate bar.
 
 ``` r
 vancouver_trees %>% 
-  summarise_all(function(x){sum(ifelse(is.na(x), 1, 0))}) %>% 
-  pivot_longer(everything(),
+  summarise_all(function(x){sum(ifelse(is.na(x), 1, 0))}) %>% # Counting NA's
+  pivot_longer(everything(), # Pivoting columnes to make them rows
                names_to = "variable",
                values_to = "missing_values") %>% 
-  ggplot(aes(x = reorder(variable, missing_values),
+  ggplot(aes(x = reorder(variable, # Starting barplot
+                         missing_values),
              y = missing_values)) +
   coord_flip() +
-  geom_col(fill = "#006D77") +
-  geom_text(aes(label = comma(missing_values)),
-               size = 3,
-            hjust = -0.1,
-               position_hor = F) +
+  geom_col(fill = "#006D77") + 
   scale_y_continuous(labels = comma,
                      expand = expansion(mult = c(0, 0.2))) +
   labs(title = "Missing Values by Variable",
@@ -609,8 +606,8 @@ generates a **density plot** for this purpose (see Exercise 8).
 ``` r
 vancouver_trees %>% 
   count(neighbourhood_name,
-        on_street, on_street_block) %>% 
-  ggplot(aes(x = n,
+        on_street, on_street_block) %>%  # Counting trees by block
+  ggplot(aes(x = n, # Ploting density
              y = reorder(str_to_title(neighbourhood_name),
                          -n))) +
   geom_density_ridges(quantile_lines = T, 
@@ -638,7 +635,7 @@ variable that indicates the age of each tree.
 
 ``` r
 vancouver_trees <- vancouver_trees %>% 
-  mutate(age = as.numeric((today() - date_planted)/365))
+  mutate(age = as.numeric((today() - date_planted)/365)) # Days since the tree was planted divided by the number of days 
 ```
 
 ### Diameter vs. Age
@@ -651,9 +648,10 @@ purpose as it enables us to quickly identify patterns.
 ``` r
 vancouver_trees %>%
   mutate(species_recode = ifelse(n() > 5000,
-                                 str_to_title(species_name), "Others"),
+                                 str_to_title(species_name),
+                                 "Others"), # Recoding species with less amount
          .by = species_name) %>%  
-  ggplot(aes(x = age,
+  ggplot(aes(x = age, # Creating scatterplot
              y = diameter)) +
   geom_point(aes(color = species_recode),
              size = 0.5,
