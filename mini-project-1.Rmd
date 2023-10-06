@@ -29,7 +29,7 @@ library(scales)
 mi_tema <- function (...) {
   ggplot2::theme_minimal() + 
     ggplot2::theme(text = ggplot2::element_text(family = "Lato"), 
-                   axis.line = ggplot2::element_line(size = 0.3), 
+                   axis.line = ggplot2::element_line(linewidth = 0.3), 
                    plot.title = ggplot2::element_text(hjust = 0.5,
                                                       size = 14,
                                                       face = "bold", 
@@ -42,7 +42,7 @@ mi_tema <- function (...) {
                                                         size = 10, 
                                                         hjust = 0),
                    panel.grid = ggplot2::element_line(linetype = 2, 
-                                                      size = 0.3,
+                                                      linewidth = 0.3,
                                                       color = "gray90"), 
                    panel.grid.minor = ggplot2::element_blank(), 
                    legend.key.width = unit(0.7, "cm"), 
@@ -132,56 +132,128 @@ And that is exactly the first thing that you will do!
 *Hint:* This is one of those times when you should think about the cleanliness of your analysis. I added a single code chunk for you below, but do you want to use more than one? Would you like to write more comments outside of the code chunk?
 
 <!-------------------------- Start your work below ---------------------------->
+## 1. First exploration of 'vancouver_trees' --------------
 
 ```{r}
-## 1. First exploration of 'vancouver_trees' --------------
-# Db format
-class(vancouver_trees)
-
-# Db variables
-names(vancouver_trees)
-
-# Db structure 
-dim(vancouver_trees)
-
+# Dataset structure to get an initial glance of information
 glimpse(vancouver_trees)
 
+# Number and proportion of variables by data type
+vancouver_trees %>% 
+  summarise(across(everything(), class)) %>% 
+  pivot_longer(everything(),
+               values_to = "data_type") %>% 
+  count(data_type) %>% 
+  mutate(prop = percent(n/sum(n), accuracy = 0.1))
+
+# Statistics of numeric variables
+vancouver_trees %>% 
+summarise(across(where(is.numeric), .fns = 
+                     list(min = min,
+                          median = median,
+                          mean = mean,
+                          stdev = sd,
+                          q25 = (\(., ...) quantile(., 0.25, ...)),
+                          q75 = (\(., ...) quantile(., 0.75, ...)),
+                          max = max),
+                 na.rm = T,
+                 .names = "{.col}__{.fn}")) %>% 
+  pivot_longer(everything(), 
+               names_sep = "__", 
+               names_to = c("variable", ".value"))
+  
+  
+```
+
 ## 2. First exploration of 'steam_games' --------------
-# Db format
-class(steam_games)
 
-# Db variables
-names(steam_games)
-
-# Db structure 
-dim(steam_games)
-
+```{r}
+# Dataset structure to get an initial glance of information
 glimpse(steam_games)
 
+# Number and proportion of variables by data type
+steam_games %>% 
+  summarise(across(everything(), class)) %>% 
+  pivot_longer(everything(),
+               values_to = "data_type") %>% 
+  count(data_type) %>% 
+  mutate(prop = percent(n/sum(n), accuracy = 0.1))
+
+# Statistics of numeric variables
+steam_games %>% 
+summarise(across(where(is.numeric), .fns = 
+                     list(min = min,
+                          median = median,
+                          mean = mean,
+                          stdev = sd,
+                          q25 = (\(., ...) quantile(., 0.25, ...)),
+                          q75 = (\(., ...) quantile(., 0.75, ...)),
+                          max = max),
+                 na.rm = T,
+                 .names = "{.col}__{.fn}")) %>% 
+  pivot_longer(everything(), 
+               names_sep = "__", 
+               names_to = c("variable", ".value"))
+```
+
 ## 3. First exploration of 'building_permits' --------------
-# Db format
-class(building_permits)
-
-# Db variables
-names(building_permits)
-
-# Db structure 
-dim(building_permits)
-
+```{r}
+# Dataset structure to get an initial glance of information
 glimpse(building_permits)
 
+# Number and proportion of variables by data type
+building_permits %>% 
+  summarise(across(everything(), class)) %>% 
+  pivot_longer(everything(),
+               values_to = "data_type") %>% 
+  count(data_type) %>% 
+  mutate(prop = percent(n/sum(n), accuracy = 0.1))
+
+# Statistics of numeric variables
+building_permits %>% 
+summarise(across(where(is.numeric), .fns = 
+                     list(min = min,
+                          median = median,
+                          mean = mean,
+                          stdev = sd,
+                          q25 = (\(., ...) quantile(., 0.25, ...)),
+                          q75 = (\(., ...) quantile(., 0.75, ...)),
+                          max = max),
+                 na.rm = T,
+                 .names = "{.col}__{.fn}")) %>% 
+  pivot_longer(everything(), 
+               names_sep = "__", 
+               names_to = c("variable", ".value"))
+```
+
 ## 4. First exploration of 'apt_buildings' --------------
-# Db format
-class(apt_buildings)
-
-# Db variables
-names(apt_buildings)
-
-# Db structure 
-dim(apt_buildings)
-
+```{r}
+# Dataset structure to get an initial glance of information
 glimpse(apt_buildings)
 
+# Number and proportion of variables by data type
+apt_buildings %>% 
+  summarise(across(everything(), class)) %>% 
+  pivot_longer(everything(),
+               values_to = "data_type") %>% 
+  count(data_type) %>% 
+  mutate(prop = percent(n/sum(n), accuracy = 0.1))
+
+# Statistics of numeric variables
+apt_buildings %>% 
+summarise(across(where(is.numeric), .fns = 
+                     list(min = min,
+                          median = median,
+                          mean = mean,
+                          stdev = sd,
+                          q25 = (\(., ...) quantile(., 0.25, ...)),
+                          q75 = (\(., ...) quantile(., 0.75, ...)),
+                          max = max),
+                 na.rm = T,
+                 .names = "{.col}__{.fn}")) %>% 
+  pivot_longer(everything(), 
+               names_sep = "__", 
+               names_to = c("variable", ".value"))
 
 ```
 

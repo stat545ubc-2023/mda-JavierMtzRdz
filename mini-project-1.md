@@ -53,7 +53,7 @@ library(scales)
 mi_tema <- function (...) {
   ggplot2::theme_minimal() + 
     ggplot2::theme(text = ggplot2::element_text(family = "Lato"), 
-                   axis.line = ggplot2::element_line(size = 0.3), 
+                   axis.line = ggplot2::element_line(linewidth = 0.3), 
                    plot.title = ggplot2::element_text(hjust = 0.5,
                                                       size = 14,
                                                       face = "bold", 
@@ -66,7 +66,7 @@ mi_tema <- function (...) {
                                                         size = 10, 
                                                         hjust = 0),
                    panel.grid = ggplot2::element_line(linetype = 2, 
-                                                      size = 0.3,
+                                                      linewidth = 0.3,
                                                       color = "gray90"), 
                    panel.grid.minor = ggplot2::element_blank(), 
                    legend.key.width = unit(0.7, "cm"), 
@@ -213,35 +213,10 @@ comments outside of the code chunk?
 
 <!-------------------------- Start your work below ---------------------------->
 
-``` r
-## 1. First exploration of 'vancouver_trees' --------------
-# Db format
-class(vancouver_trees)
-```
-
-    ## [1] "tbl_df"     "tbl"        "data.frame"
+## 1. First exploration of ‘vancouver_trees’ ————–
 
 ``` r
-# Db variables
-names(vancouver_trees)
-```
-
-    ##  [1] "tree_id"            "civic_number"       "std_street"        
-    ##  [4] "genus_name"         "species_name"       "cultivar_name"     
-    ##  [7] "common_name"        "assigned"           "root_barrier"      
-    ## [10] "plant_area"         "on_street_block"    "on_street"         
-    ## [13] "neighbourhood_name" "street_side_name"   "height_range_id"   
-    ## [16] "diameter"           "curb"               "date_planted"      
-    ## [19] "longitude"          "latitude"
-
-``` r
-# Db structure 
-dim(vancouver_trees)
-```
-
-    ## [1] 146611     20
-
-``` r
+# Dataset structure to get an initial glance of information
 glimpse(vancouver_trees)
 ```
 
@@ -269,38 +244,67 @@ glimpse(vancouver_trees)
     ## $ latitude           <dbl> 49.21776, 49.21776, 49.23938, 49.23469, 49.23894, 4…
 
 ``` r
-## 2. First exploration of 'steam_games' --------------
-# Db format
-class(steam_games)
+# Number and proportion of variables by data type
+vancouver_trees %>% 
+  summarise(across(everything(), class)) %>% 
+  pivot_longer(everything(),
+               values_to = "data_type") %>% 
+  count(data_type) %>% 
+  mutate(prop = percent(n/sum(n), accuracy = 0.1))
 ```
 
-    ## [1] "spec_tbl_df" "tbl_df"      "tbl"         "data.frame"
+    ## # A tibble: 3 × 3
+    ##   data_type     n prop 
+    ##   <chr>     <int> <chr>
+    ## 1 Date          1 5.0% 
+    ## 2 character    12 60.0%
+    ## 3 numeric       7 35.0%
 
 ``` r
-# Db variables
-names(steam_games)
+# Statistics of numeric variables
+vancouver_trees %>% 
+summarise(across(where(is.numeric), .fns = 
+                     list(min = min,
+                          median = median,
+                          mean = mean,
+                          stdev = sd,
+                          q25 = (\(., ...) quantile(., 0.25, ...)),
+                          q75 = (\(., ...) quantile(., 0.75, ...)),
+                          max = max),
+                 na.rm = T,
+                 .names = "{.col}__{.fn}")) %>% 
+  pivot_longer(everything(), 
+               names_sep = "__", 
+               names_to = c("variable", ".value"))
 ```
 
-    ##  [1] "id"                       "url"                     
-    ##  [3] "types"                    "name"                    
-    ##  [5] "desc_snippet"             "recent_reviews"          
-    ##  [7] "all_reviews"              "release_date"            
-    ##  [9] "developer"                "publisher"               
-    ## [11] "popular_tags"             "game_details"            
-    ## [13] "languages"                "achievements"            
-    ## [15] "genre"                    "game_description"        
-    ## [17] "mature_content"           "minimum_requirements"    
-    ## [19] "recommended_requirements" "original_price"          
-    ## [21] "discount_price"
+    ## Warning: There was 1 warning in `summarise()`.
+    ## ℹ In argument: `across(...)`.
+    ## Caused by warning:
+    ## ! The `...` argument of `across()` is deprecated as of dplyr 1.1.0.
+    ## Supply arguments directly to `.fns` through an anonymous function instead.
+    ## 
+    ##   # Previously
+    ##   across(a:b, mean, na.rm = TRUE)
+    ## 
+    ##   # Now
+    ##   across(a:b, \(x) mean(x, na.rm = TRUE))
+
+    ## # A tibble: 7 × 8
+    ##   variable           min   median      mean      stdev     q25      q75      max
+    ##   <chr>            <dbl>    <dbl>     <dbl>      <dbl>   <dbl>    <dbl>    <dbl>
+    ## 1 tree_id           12   134903   131892.   75457.     65464.  194450.  266203  
+    ## 2 civic_number       0     2604     2937.    2058.      1306     4005    17888  
+    ## 3 on_street_block    0     2600     2909.    2067.      1300     4000     9900  
+    ## 4 height_range_id    0        2        2.63     1.54       1        4       10  
+    ## 5 diameter           0        9       11.5      9.21       3.5     16.5    435  
+    ## 6 longitude       -123.    -123.    -123.       0.0495  -123.    -123.    -123. 
+    ## 7 latitude          49.2     49.2     49.2      0.0211    49.2     49.3     49.3
+
+## 2. First exploration of ‘steam_games’ ————–
 
 ``` r
-# Db structure 
-dim(steam_games)
-```
-
-    ## [1] 40833    21
-
-``` r
+# Dataset structure to get an initial glance of information
 glimpse(steam_games)
 ```
 
@@ -329,34 +333,51 @@ glimpse(steam_games)
     ## $ discount_price           <dbl> 14.99, NA, NA, NA, NA, 35.18, 70.42, 17.58, N…
 
 ``` r
-## 3. First exploration of 'building_permits' --------------
-# Db format
-class(building_permits)
+# Number and proportion of variables by data type
+steam_games %>% 
+  summarise(across(everything(), class)) %>% 
+  pivot_longer(everything(),
+               values_to = "data_type") %>% 
+  count(data_type) %>% 
+  mutate(prop = percent(n/sum(n), accuracy = 0.1))
 ```
 
-    ## [1] "spec_tbl_df" "tbl_df"      "tbl"         "data.frame"
+    ## # A tibble: 2 × 3
+    ##   data_type     n prop 
+    ##   <chr>     <int> <chr>
+    ## 1 character    17 81.0%
+    ## 2 numeric       4 19.0%
 
 ``` r
-# Db variables
-names(building_permits)
+# Statistics of numeric variables
+steam_games %>% 
+summarise(across(where(is.numeric), .fns = 
+                     list(min = min,
+                          median = median,
+                          mean = mean,
+                          stdev = sd,
+                          q25 = (\(., ...) quantile(., 0.25, ...)),
+                          q75 = (\(., ...) quantile(., 0.75, ...)),
+                          max = max),
+                 na.rm = T,
+                 .names = "{.col}__{.fn}")) %>% 
+  pivot_longer(everything(), 
+               names_sep = "__", 
+               names_to = c("variable", ".value"))
 ```
 
-    ##  [1] "permit_number"               "issue_date"                 
-    ##  [3] "project_value"               "type_of_work"               
-    ##  [5] "address"                     "project_description"        
-    ##  [7] "building_contractor"         "building_contractor_address"
-    ##  [9] "applicant"                   "applicant_address"          
-    ## [11] "property_use"                "specific_use_category"      
-    ## [13] "year"                        "bi_id"
+    ## # A tibble: 4 × 8
+    ##   variable         min   median    mean   stdev      q25      q75     max
+    ##   <chr>          <dbl>    <dbl>   <dbl>   <dbl>    <dbl>    <dbl>   <dbl>
+    ## 1 id                 1 20417    20417   11788.  10209    30625     40833 
+    ## 2 achievements       1    21       77.2   449.     12       38      9821 
+    ## 3 original_price     0     4.99    53.1  5194.      1.99     9.99 730640 
+    ## 4 discount_price     0    20.0     46.8    93.8     8.78    43.9     963.
+
+## 3. First exploration of ‘building_permits’ ————–
 
 ``` r
-# Db structure 
-dim(building_permits)
-```
-
-    ## [1] 20680    14
-
-``` r
+# Dataset structure to get an initial glance of information
 glimpse(building_permits)
 ```
 
@@ -378,46 +399,51 @@ glimpse(building_permits)
     ## $ bi_id                       <dbl> 524, 535, 539, 541, 543, 546, 547, 548, 54…
 
 ``` r
-## 4. First exploration of 'apt_buildings' --------------
-# Db format
-class(apt_buildings)
+# Number and proportion of variables by data type
+building_permits %>% 
+  summarise(across(everything(), class)) %>% 
+  pivot_longer(everything(),
+               values_to = "data_type") %>% 
+  count(data_type) %>% 
+  mutate(prop = percent(n/sum(n), accuracy = 0.1))
 ```
 
-    ## [1] "tbl_df"     "tbl"        "data.frame"
+    ## # A tibble: 3 × 3
+    ##   data_type     n prop 
+    ##   <chr>     <int> <chr>
+    ## 1 Date          1 7.1% 
+    ## 2 character    10 71.4%
+    ## 3 numeric       3 21.4%
 
 ``` r
-# Db variables
-names(apt_buildings)
+# Statistics of numeric variables
+building_permits %>% 
+summarise(across(where(is.numeric), .fns = 
+                     list(min = min,
+                          median = median,
+                          mean = mean,
+                          stdev = sd,
+                          q25 = (\(., ...) quantile(., 0.25, ...)),
+                          q75 = (\(., ...) quantile(., 0.75, ...)),
+                          max = max),
+                 na.rm = T,
+                 .names = "{.col}__{.fn}")) %>% 
+  pivot_longer(everything(), 
+               names_sep = "__", 
+               names_to = c("variable", ".value"))
 ```
 
-    ##  [1] "id"                               "air_conditioning"                
-    ##  [3] "amenities"                        "balconies"                       
-    ##  [5] "barrier_free_accessibilty_entr"   "bike_parking"                    
-    ##  [7] "exterior_fire_escape"             "fire_alarm"                      
-    ##  [9] "garbage_chutes"                   "heating_type"                    
-    ## [11] "intercom"                         "laundry_room"                    
-    ## [13] "locker_or_storage_room"           "no_of_elevators"                 
-    ## [15] "parking_type"                     "pets_allowed"                    
-    ## [17] "prop_management_company_name"     "property_type"                   
-    ## [19] "rsn"                              "separate_gas_meters"             
-    ## [21] "separate_hydro_meters"            "separate_water_meters"           
-    ## [23] "site_address"                     "sprinkler_system"                
-    ## [25] "visitor_parking"                  "ward"                            
-    ## [27] "window_type"                      "year_built"                      
-    ## [29] "year_registered"                  "no_of_storeys"                   
-    ## [31] "emergency_power"                  "non-smoking_building"            
-    ## [33] "no_of_units"                      "no_of_accessible_parking_spaces" 
-    ## [35] "facilities_available"             "cooling_room"                    
-    ## [37] "no_barrier_free_accessible_units"
+    ## # A tibble: 3 × 8
+    ##   variable        min median    mean       stdev    q25     q75       max
+    ##   <chr>         <dbl>  <dbl>   <dbl>       <dbl>  <dbl>   <dbl>     <dbl>
+    ## 1 project_value     0 48000  609166. 8101389.    10739  217791. 807185500
+    ## 2 year           2017  2018    2018.       0.947  2017    2019       2020
+    ## 3 bi_id             1 10340.  10340.    5970.     5171.  15510.     20680
+
+## 4. First exploration of ‘apt_buildings’ ————–
 
 ``` r
-# Db structure 
-dim(apt_buildings)
-```
-
-    ## [1] 3455   37
-
-``` r
+# Dataset structure to get an initial glance of information
 glimpse(apt_buildings)
 ```
 
@@ -460,6 +486,53 @@ glimpse(apt_buildings)
     ## $ facilities_available             <chr> "Recycling bins", "Green Bin / Organi…
     ## $ cooling_room                     <chr> "NO", "NO", "NO", "NO", "NO", "NO", "…
     ## $ no_barrier_free_accessible_units <dbl> 2, 0, 0, 42, 0, NA, 14, 0, 0, 1, 25, …
+
+``` r
+# Number and proportion of variables by data type
+apt_buildings %>% 
+  summarise(across(everything(), class)) %>% 
+  pivot_longer(everything(),
+               values_to = "data_type") %>% 
+  count(data_type) %>% 
+  mutate(prop = percent(n/sum(n), accuracy = 0.1))
+```
+
+    ## # A tibble: 2 × 3
+    ##   data_type     n prop 
+    ##   <chr>     <int> <chr>
+    ## 1 character    28 75.7%
+    ## 2 numeric       9 24.3%
+
+``` r
+# Statistics of numeric variables
+apt_buildings %>% 
+summarise(across(where(is.numeric), .fns = 
+                     list(min = min,
+                          median = median,
+                          mean = mean,
+                          stdev = sd,
+                          q25 = (\(., ...) quantile(., 0.25, ...)),
+                          q75 = (\(., ...) quantile(., 0.75, ...)),
+                          max = max),
+                 na.rm = T,
+                 .names = "{.col}__{.fn}")) %>% 
+  pivot_longer(everything(), 
+               names_sep = "__", 
+               names_to = c("variable", ".value"))
+```
+
+    ## # A tibble: 9 × 8
+    ##   variable                        min median   mean   stdev    q25    q75    max
+    ##   <chr>                         <dbl>  <dbl>  <dbl>   <dbl>  <dbl>  <dbl>  <dbl>
+    ## 1 id                           1.04e4 1.21e4 1.21e4 9.98e+2 1.12e4 1.29e4 1.38e4
+    ## 2 no_of_elevators              0      1   e0 1.21e0 1.31e+0 0      2   e0 3.2 e1
+    ## 3 rsn                          4.15e6 4.15e6 4.17e6 5.20e+4 4.15e6 4.16e6 4.72e6
+    ## 4 year_built                   1.81e3 1.96e3 1.96e3 1.91e+1 1.95e3 1.97e3 2.02e3
+    ## 5 year_registered              2.02e3 2.02e3 2.02e3 4.21e-1 2.02e3 2.02e3 2.02e3
+    ## 6 no_of_storeys                0      5   e0 7.74e0 6.24e+0 3   e0 1   e1 5.1 e1
+    ## 7 no_of_units                  0      5.2 e1 9.11e1 1.17e+2 2.5 e1 1.24e2 4.11e3
+    ## 8 no_of_accessible_parking_sp… 0      1   e0 6.56e0 1.66e+1 0      5   e0 3.4 e2
+    ## 9 no_barrier_free_accessible_… 0      0      9.41e0 3.96e+1 0      1   e0 4.74e2
 
 <!----------------------------------------------------------------------------->
 
@@ -592,7 +665,7 @@ vancouver_trees %>%
   mi_tema() 
 ```
 
-![](mini-project-1_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](mini-project-1_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ### Tree Density Comparison
 
@@ -624,7 +697,7 @@ vancouver_trees %>%
   mi_tema() 
 ```
 
-![](mini-project-1_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](mini-project-1_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ### Life Span of Trees
 
@@ -667,7 +740,7 @@ vancouver_trees %>%
   mi_tema() 
 ```
 
-![](mini-project-1_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](mini-project-1_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 <!----------------------------------------------------------------------------->
 
