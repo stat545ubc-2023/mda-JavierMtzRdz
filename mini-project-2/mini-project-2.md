@@ -73,6 +73,7 @@ library(tidyverse)
 library(scales)
 library(ggdist)
 library(ggridges)
+library(ggrepel)
 
 # Own functions
 mi_tema <- function (...) {
@@ -446,13 +447,17 @@ vancouver_trees %>%
              stroke = 0.5,
              width = 0.0005,
              height = 0.0005) +
-  geom_text(data = . %>% 
-              summarise(longitude = mean(longitude, na.rm = T),
-         latitude = mean(latitude, na.rm = T),
-         .by = neighbourhood_name),
-            aes(label = str_wrap(neighbourhood_name,
-                                 5)),
-            size = 3) +
+  geom_text_repel(data = . %>% 
+                    summarise(longitude = mean(longitude, na.rm = T),
+                              latitude = mean(latitude, na.rm = T),
+                              .by = neighbourhood_name),
+                  aes(label = str_wrap(neighbourhood_name,
+                                       5)),
+                  force = 4,
+                  force_pull = 50,
+                  bg.color = "grey98", # shadow color
+                  bg.r = 0.1,
+                  size = 2.5) +
   scale_colour_hue(h = c(40, 300),
                    c = 60,
                    l = 70,

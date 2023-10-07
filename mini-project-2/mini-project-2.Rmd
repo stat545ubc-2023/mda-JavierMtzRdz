@@ -49,6 +49,7 @@ library(tidyverse)
 library(scales)
 library(ggdist)
 library(ggridges)
+library(ggrepel)
 
 # Own functions
 mi_tema <- function (...) {
@@ -232,7 +233,7 @@ main_species %>%
 ## 2. How are diameters distributed across neighbourhoods?
 ### Summarizing: Compute the *range*, *mean*, and *two other summary statistics* of **one numerical variable** across the groups of **one categorical variable** from your data.
 
-The code shown below is focused on summarizing the statistics of the variable 'diameter' within different neighbourhoods. It estimates various statistics including range, mean, median, and percentiles (quantiles). The code effectively answers the research question by providing quantitative measures that describe the distribution of diameters across neighbourhoods.
+The code below summarizes the variable 'diameter' statistics within different neighbourhoods. It estimates various statistics including range, mean, median, and percentiles. The code effectively answers the research question by providing quantitative measures that describe the distribution of diameters across neighbourhoods.
 
 ```{r message=TRUE, warning=FALSE}
 dmtr_statistics <- vancouver_trees %>% 
@@ -293,7 +294,7 @@ dmtr_statistics %>%
 
 ### Summarizing: Compute the number of observations for at least one of your categorical variables.
 
-The code below generates the count of trees with and without root barriers in each neighbourhood. The resulting table allows a clear comparison of the distribution of trees with this characteristics across different neighbourhoods, which answers the research question.
+The code below generates the count of trees with and without root barriers in each neighbourhood. The resulting table allows a clear comparison of the distribution of trees with this characteristic across different neighbourhoods, which answers the research question.
 
 ```{r message=TRUE, warning=FALSE}
 
@@ -324,13 +325,17 @@ vancouver_trees %>%
              stroke = 0.5,
              width = 0.0005,
              height = 0.0005) +
-  geom_text(data = . %>% 
-              summarise(longitude = mean(longitude, na.rm = T),
-         latitude = mean(latitude, na.rm = T),
-         .by = neighbourhood_name),
-            aes(label = str_wrap(neighbourhood_name,
-                                 5)),
-            size = 3) +
+  geom_text_repel(data = . %>% 
+                    summarise(longitude = mean(longitude, na.rm = T),
+                              latitude = mean(latitude, na.rm = T),
+                              .by = neighbourhood_name),
+                  aes(label = str_wrap(neighbourhood_name,
+                                       5)),
+                  force = 4,
+                  force_pull = 50,
+                  bg.color = "grey98", # shadow color
+                  bg.r = 0.1,
+                  size = 2.5) +
   scale_colour_hue(h = c(40, 300),
                    c = 60,
                    l = 70,
@@ -350,7 +355,7 @@ vancouver_trees %>%
 
 ### Summarizing: Create a categorical variable with 3 or more groups from an existing numerical variable.
 
-The code below first extracts the year (a numerical variable) from the `date_planted` variable and then categorizes it into decades (e.g., '1980s', '1990s'). It then counts by neighbourhood and decade. The resulting counts provide valuable insights into the number of trees planted in each decade and how this varies across neighbourhoods.
+The code below extracts the year (a numerical variable) from the `date_planted` variable and then categorizes it into decades (e.g., '1980s', '1990s'). It then counts by neighbourhood and decade. The resulting counts provide valuable insights into the number of trees planted each decade and how this varies across neighbourhoods.
 
 ```{r message=TRUE, warning=FALSE}
 
@@ -369,9 +374,9 @@ vancouver_trees %>%
 
 ### Graphing: Create 3 histograms, with each histogram having different sized bins. Pick the "best" one and explain why it is the best.
 
-The code below generates three histograms with different bin sizes (30, 50, and 70) to visualize the distribution of tree plantings over time. Among the three histograms, the one with 'bins = 50' is likely to be the best choice. A bin size of 50 provides a good balance between capturing the underlying distribution and avoiding excessive detail or noise. 
+The code below generates three histograms with different bin sizes (30, 50, and 70) to visualize the distribution of tree plantings over time. Among the three histograms, the one with 'bins = 50' is likely the best choice —a bin size of 50 balances capturing the underlying distribution and avoiding excessive detail or noise. 
 
-This plot  addresses the research question by showing the number of threes planted over time. However, it is noted that a histogram may not be the best plot to present results over time.
+This plot addresses the research question by showing the number of trees planted over time. However, it is noted that a histogram may not be the best plot to present results over time.
 
 ```{r message=TRUE, warning=FALSE, dpi=300, fig.height=6, out.height ='700px'}
 # Base plot
@@ -425,13 +430,13 @@ base_plot +
 Based on the operations that you've completed, how much closer are you to answering your research questions? Think about what aspects of your research questions remain unclear. Can your research questions be refined, now that you've investigated your data a bit more? Which research questions are yielding interesting results?
 
 <!------------------------- Write your answer here ---------------------------->
-Based on the operations performed, we have made progress towards understanding the primary characteristics of the forest ecosystem in each neighborhood. We have explored various aspects such as tree species distribution, planting dates, diameters, and the presence of root barriers.
+Based on the operations performed, we have made progress toward understanding the primary characteristics of the forest ecosystem in each neighbourhood. We have explored various aspects such as tree species distribution, planting dates, diameters, and root barriers.
 
-However, there are still some aspects that remain unclear. For instance, we may need to further investigate factors like tree health, biodiversity, and environmental conditions that contribute to the overall characteristics of the forest ecosystem.
+However, there are still some aspects that remain unclear. For instance, we may need to investigate further factors like tree health, biodiversity, and environmental conditions that contribute to the overall characteristics of the forest ecosystem.
 
-To refine the research question, we could consider specifying certain characteristics (e.g., tree diversity, age distribution) or focusing on specific neighborhoods for a more in-depth analysis.
+To refine the research question, we could consider specifying certain characteristics (e.g., tree diversity, age distribution) or focusing on specific neighbourhoods for a more in-depth analysis.
 
-The research questions related to tree species distribution, planting dates, and the presence of root barriers are yielding interesting results. These factors provide valuable insights into the composition and management of the forest ecosystem in each neighborhood. Further exploration of these aspects may lead to a more comprehensive understanding of the overall ecosystem characteristics.
+The research questions related to tree species distribution, planting dates, and the presence of root barriers are yielding interesting results. These factors provide valuable insights into the composition and management of the forest ecosystem in each neighbourhood. Further exploring these aspects may lead to a more comprehensive understanding of the overall ecosystem characteristics.
 <!----------------------------------------------------------------------------->
 
 # Task 2: Tidy your data
