@@ -430,9 +430,7 @@ base_plot +
 Based on the operations that you've completed, how much closer are you to answering your research questions? Think about what aspects of your research questions remain unclear. Can your research questions be refined, now that you've investigated your data a bit more? Which research questions are yielding interesting results?
 
 <!------------------------- Write your answer here ---------------------------->
-Based on the operations performed, we have made progress toward understanding the primary characteristics of the forest ecosystem in each neighbourhood. We have explored various aspects such as tree species distribution, planting dates, diameters, and root barriers.
-
-However, there are still some aspects that remain unclear. For instance, we may need to investigate further factors like tree health, biodiversity, and environmental conditions that contribute to the overall characteristics of the forest ecosystem.
+In the previous sections of this analysis, we have made progress toward understanding the primary characteristics of street trees in each neighbourhood. We have explored various aspects such as tree most common species, planting dates, diameters and root barriers, which  However, it seems to be a small portion . For instance, we may need to investigate further factors like tree health, biodiversity, and environmental conditions that contribute to the overall characteristics of the forest ecosystem.
 
 To refine the research question, we could consider specifying certain characteristics (e.g., tree diversity, age distribution) or focusing on specific neighbourhoods for a more in-depth analysis.
 
