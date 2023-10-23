@@ -74,6 +74,7 @@ library(scales)
 library(ggdist)
 library(ggridges)
 library(ggrepel)
+library(here)
 
 # Own functions
 mi_tema <- function (...) {
@@ -306,16 +307,15 @@ main_species %>%
 
 <img src="mini-project-2_files/figure-gfm/unnamed-chunk-4-1.png" height="700px" />
 
-## 2. How are diameters distributed across neighbourhoods?
+## 2. How are tree diameters distributed across neighbourhoods?
 
 ### Summarizing: Compute the *range*, *mean*, and *two other summary statistics* of **one numerical variable** across the groups of **one categorical variable** from your data.
 
-The code shown below is focused on summarizing the statistics of the
-variable ‘diameter’ within different neighbourhoods. It estimates
-various statistics including range, mean, median, and percentiles
-(quantiles). The code effectively answers the research question by
-providing quantitative measures that describe the distribution of
-diameters across neighbourhoods.
+The code below summarizes the variable ‘diameter’ statistics within
+different neighbourhoods. It estimates various statistics including
+range, mean, median, and percentiles. The code effectively answers the
+research question by providing quantitative measures that describe the
+distribution of diameters across neighbourhoods.
 
 ``` r
 dmtr_statistics <- vancouver_trees %>% 
@@ -397,7 +397,7 @@ dmtr_statistics %>%
 
 The code below generates the count of trees with and without root
 barriers in each neighbourhood. The resulting table allows a clear
-comparison of the distribution of trees with this characteristics across
+comparison of the distribution of trees with this characteristic across
 different neighbourhoods, which answers the research question.
 
 ``` r
@@ -478,11 +478,11 @@ vancouver_trees %>%
 
 ### Summarizing: Create a categorical variable with 3 or more groups from an existing numerical variable.
 
-The code below first extracts the year (a numerical variable) from the
+The code below extracts the year (a numerical variable) from the
 `date_planted` variable and then categorizes it into decades (e.g.,
 ‘1980s’, ‘1990s’). It then counts by neighbourhood and decade. The
 resulting counts provide valuable insights into the number of trees
-planted in each decade and how this varies across neighbourhoods.
+planted each decade and how this varies across neighbourhoods.
 
 ``` r
 vancouver_trees <- vancouver_trees %>% 
@@ -516,13 +516,13 @@ vancouver_trees %>%
 
 The code below generates three histograms with different bin sizes (30,
 50, and 70) to visualize the distribution of tree plantings over time.
-Among the three histograms, the one with ‘bins = 50’ is likely to be the
-best choice. A bin size of 50 provides a good balance between capturing
-the underlying distribution and avoiding excessive detail or noise.
+Among the three histograms, the one with ‘bins = 50’ is likely the best
+choice —a bin size of 50 balances capturing the underlying distribution
+and avoiding excessive detail or noise.
 
-This plot addresses the research question by showing the number of
-threes planted over time. However, it is noted that a histogram may not
-be the best plot to present results over time.
+This plot addresses the research question by showing the number of trees
+planted over time. However, it is noted that a histogram may not be the
+best plot to present results over time.
 
 ``` r
 # Base plot
@@ -590,27 +590,24 @@ research questions are yielding interesting results?
 
 <!------------------------- Write your answer here ---------------------------->
 
-Based on the operations performed, we have made progress towards
-understanding the primary characteristics of the forest ecosystem in
-each neighborhood. We have explored various aspects such as tree species
-distribution, planting dates, diameters, and the presence of root
-barriers.
-
-However, there are still some aspects that remain unclear. For instance,
-we may need to further investigate factors like tree health,
-biodiversity, and environmental conditions that contribute to the
-overall characteristics of the forest ecosystem.
+In the previous sections of this analysis, we have made progress toward
+understanding the primary characteristics of street trees in each
+neighbourhood. We have explored various aspects such as tree most common
+species, planting dates, diameters and root barriers, which However, it
+seems to be a small portion . For instance, we may need to investigate
+further factors and environmental conditions that contribute to the
+overall characteristics of the urban tree ecosystem.
 
 To refine the research question, we could consider specifying certain
 characteristics (e.g., tree diversity, age distribution) or focusing on
-specific neighborhoods for a more in-depth analysis.
+specific neighbourhoods for a more in-depth analysis.
 
 The research questions related to tree species distribution, planting
 dates, and the presence of root barriers are yielding interesting
 results. These factors provide valuable insights into the composition
-and management of the forest ecosystem in each neighborhood. Further
-exploration of these aspects may lead to a more comprehensive
-understanding of the overall ecosystem characteristics.
+and management of the urban tree ecosystem in each neighbourhood.
+Further exploring these aspects may lead to a more comprehensive
+understanding of the overall characteristics.
 <!----------------------------------------------------------------------------->
 
 # Task 2: Tidy your data
@@ -631,6 +628,18 @@ untidy? Go through all your columns, or if you have \>8 variables, just
 pick 8, and explain whether the data is untidy or tidy.
 
 <!--------------------------- Start your work below --------------------------->
+
+I think that the `vancouver_trees` data set has a tidy structure. Each
+row corresponds to a different tree, and each column represents a
+specific attribute of that tree. For instance, `tree_id` serves as a
+unique identifier for each tree; `civic_number`, `std_street`,
+`on_street`, `street_side_name`, `neighbourhood_name`, `longitude`, and
+`latitude` provide location details for each tree; the columns
+`genus_name`, `species_name`, `cultivar_name`, and `common_name` offer
+information about the tree’s natural classification; and
+`height_range_id`, `diameter`, `curb`, `date_planted`, and `curb`
+provide details about specific characteristics of each street tree.
+Importantly, every value is assigned to a specific cell.
 <!----------------------------------------------------------------------------->
 
 ### 2.2 (4 points)
@@ -645,6 +654,84 @@ Be sure to explain your reasoning for this task. Show us the “before”
 and “after”.
 
 <!--------------------------- Start your work below --------------------------->
+
+As I mentioned earlier, the `vancouver_trees` dataset is tidy.
+Consequently, this process is split into two parts. The first part
+involves transforming the dataset into a untidy and the second part is
+about reverting it back to its original form.
+
+In the first section, the idea is to create a dataset with a pseudo JSON
+format embedded within a dataframe. This means that each tree will be
+represented as a cell, and within that cell, there will be a dataframe.
+The first column of this dataframe will hold the attribute name, and the
+second column will contain its corresponding value.”
+
+``` r
+untidy_trees <- vancouver_trees %>% 
+  mutate(row = row_number(),
+         across(tree_id:decade, as.character)) %>%  
+  pivot_longer(tree_id:decade) %>% 
+  nest_by(row)
+  
+# Now, the data set has two columns: `row` and data
+head(untidy_trees)
+```
+
+    ## # A tibble: 6 × 2
+    ## # Rowwise:  row
+    ##     row               data
+    ##   <int> <list<tibble[,2]>>
+    ## 1     1           [22 × 2]
+    ## 2     2           [22 × 2]
+    ## 3     3           [22 × 2]
+    ## 4     4           [22 × 2]
+    ## 5     5           [22 × 2]
+    ## 6     6           [22 × 2]
+
+``` r
+# Inside the data cell we can find a data frame where the first column is the name of the column and the second its value.
+head(untidy_trees$data[[1]])
+```
+
+    ## # A tibble: 6 × 2
+    ##   name          value    
+    ##   <chr>         <chr>    
+    ## 1 tree_id       149556   
+    ## 2 civic_number  494      
+    ## 3 std_street    W 58TH AV
+    ## 4 genus_name    ULMUS    
+    ## 5 species_name  Americana
+    ## 6 cultivar_name BRANDON
+
+Now, we will rever this process.
+
+``` r
+tidy_trees <- untidy_trees %>% 
+  unnest(data) %>% 
+  pivot_wider(names_from = name,
+              values_from = value) %>% 
+  ungroup() %>% 
+    select(-row)
+  
+# Now, it has returned to its original form
+head(tidy_trees)
+```
+
+    ## # A tibble: 6 × 22
+    ##   tree_id civic_number std_street genus_name species_name cultivar_name  
+    ##   <chr>   <chr>        <chr>      <chr>      <chr>        <chr>          
+    ## 1 149556  494          W 58TH AV  ULMUS      Americana    BRANDON        
+    ## 2 149563  450          W 58TH AV  ZELKOVA    Serrata      <NA>           
+    ## 3 149579  4994         WINDSOR ST STYRAX     Japonica     <NA>           
+    ## 4 149590  858          E 39TH AV  FRAXINUS   Americana    AUTUMN APPLAUSE
+    ## 5 149604  5032         WINDSOR ST ACER       Campestre    <NA>           
+    ## 6 149616  585          W 61ST AV  PYRUS      Calleryana   CHANTICLEER    
+    ## # ℹ 16 more variables: common_name <chr>, assigned <chr>, root_barrier <chr>,
+    ## #   plant_area <chr>, on_street_block <chr>, on_street <chr>,
+    ## #   neighbourhood_name <chr>, street_side_name <chr>, height_range_id <chr>,
+    ## #   diameter <chr>, curb <chr>, date_planted <chr>, longitude <chr>,
+    ## #   latitude <chr>, year <chr>, decade <chr>
+
 <!----------------------------------------------------------------------------->
 
 ### 2.3 (4 points)
@@ -686,9 +773,10 @@ these.
 
 <!-------------------------- Start your work below ---------------------------->
 
-**Research Question**: FILL_THIS_IN
+**Research Question**: How are tree diameters distributed across
+neighbourhoods?
 
-**Variable of interest**: FILL_THIS_IN
+**Variable of interest**: diameters
 
 <!----------------------------------------------------------------------------->
 
@@ -713,6 +801,57 @@ specifics in STAT 545.
     coefficients.
 
 <!-------------------------- Start your work below ---------------------------->
+
+``` r
+vancouver_trees
+```
+
+    ## # A tibble: 146,611 × 22
+    ##    tree_id civic_number std_street    genus_name species_name cultivar_name  
+    ##      <dbl>        <dbl> <chr>         <chr>      <chr>        <chr>          
+    ##  1  149556          494 W 58TH AV     ULMUS      Americana    BRANDON        
+    ##  2  149563          450 W 58TH AV     ZELKOVA    Serrata      <NA>           
+    ##  3  149579         4994 WINDSOR ST    STYRAX     Japonica     <NA>           
+    ##  4  149590          858 E 39TH AV     FRAXINUS   Americana    AUTUMN APPLAUSE
+    ##  5  149604         5032 WINDSOR ST    ACER       Campestre    <NA>           
+    ##  6  149616          585 W 61ST AV     PYRUS      Calleryana   CHANTICLEER    
+    ##  7  149617         4909 SHERBROOKE ST ACER       Platanoides  COLUMNARE      
+    ##  8  149618         4925 SHERBROOKE ST ACER       Platanoides  COLUMNARE      
+    ##  9  149619         4969 SHERBROOKE ST ACER       Platanoides  COLUMNARE      
+    ## 10  149625          720 E 39TH AV     FRAXINUS   Americana    AUTUMN APPLAUSE
+    ## # ℹ 146,601 more rows
+    ## # ℹ 16 more variables: common_name <chr>, assigned <chr>, root_barrier <chr>,
+    ## #   plant_area <chr>, on_street_block <dbl>, on_street <chr>,
+    ## #   neighbourhood_name <chr>, street_side_name <chr>, height_range_id <dbl>,
+    ## #   diameter <dbl>, curb <chr>, date_planted <date>, longitude <dbl>,
+    ## #   latitude <dbl>, year <dbl>, decade <chr>
+
+``` r
+reg <- lm(diameter ~ neighbourhood_name,
+          data = vancouver_trees)
+
+one_way <- aov(diameter ~ neighbourhood_name, data = vancouver_trees)
+
+
+one_way <- aov(diameter ~ neighbourhood_name, data = vancouver_trees)
+
+plot(one_way, 2)
+```
+
+![](mini-project-2_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+``` r
+aov_residuals <- residuals(object = one_way)
+# Run Shapiro-Wilk test
+shapiro.test(x = sample(aov_residuals, 4000))
+```
+
+    ## 
+    ##  Shapiro-Wilk normality test
+    ## 
+    ## data:  sample(aov_residuals, 4000)
+    ## W = 0.73251, p-value < 2.2e-16
+
 <!----------------------------------------------------------------------------->
 
 ## 3.2 (3 points)
@@ -751,6 +890,18 @@ file in your `output` folder. Use the `here::here()` function.
   file, and remake it simply by knitting this Rmd file.
 
 <!-------------------------- Start your work below ---------------------------->
+
+My repositories does not have an R project embedded. Consequently, the
+next code assumes that
+
+``` r
+dir.create(here("output"),
+           showWarnings = F)
+
+write_csv(root_b_count,
+          here("output", "root_b_count.csv"))
+```
+
 <!----------------------------------------------------------------------------->
 
 ## 4.2 (3 points)

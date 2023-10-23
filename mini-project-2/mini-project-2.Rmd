@@ -50,6 +50,7 @@ library(scales)
 library(ggdist)
 library(ggridges)
 library(ggrepel)
+library(here)
 
 # Own functions
 mi_tema <- function (...) {
@@ -230,7 +231,7 @@ main_species %>%
 ```
 
 
-## 2. How are diameters distributed across neighbourhoods?
+## 2. How are tree diameters distributed across neighbourhoods?
 ### Summarizing: Compute the *range*, *mean*, and *two other summary statistics* of **one numerical variable** across the groups of **one categorical variable** from your data.
 
 The code below summarizes the variable 'diameter' statistics within different neighbourhoods. It estimates various statistics including range, mean, median, and percentiles. The code effectively answers the research question by providing quantitative measures that describe the distribution of diameters across neighbourhoods.
@@ -430,11 +431,11 @@ base_plot +
 Based on the operations that you've completed, how much closer are you to answering your research questions? Think about what aspects of your research questions remain unclear. Can your research questions be refined, now that you've investigated your data a bit more? Which research questions are yielding interesting results?
 
 <!------------------------- Write your answer here ---------------------------->
-In the previous sections of this analysis, we have made progress toward understanding the primary characteristics of street trees in each neighbourhood. We have explored various aspects such as tree most common species, planting dates, diameters and root barriers, which  However, it seems to be a small portion . For instance, we may need to investigate further factors like tree health, biodiversity, and environmental conditions that contribute to the overall characteristics of the forest ecosystem.
+In the previous sections of this analysis, we have made progress toward understanding the primary characteristics of street trees in each neighbourhood. We have explored various aspects such as tree most common species, planting dates, diameters and root barriers, which  However, it seems to be a small portion . For instance, we may need to investigate further factors and environmental conditions that contribute to the overall characteristics of the urban tree ecosystem.
 
 To refine the research question, we could consider specifying certain characteristics (e.g., tree diversity, age distribution) or focusing on specific neighbourhoods for a more in-depth analysis.
 
-The research questions related to tree species distribution, planting dates, and the presence of root barriers are yielding interesting results. These factors provide valuable insights into the composition and management of the forest ecosystem in each neighbourhood. Further exploring these aspects may lead to a more comprehensive understanding of the overall ecosystem characteristics.
+The research questions related to tree species distribution, planting dates, and the presence of root barriers are yielding interesting results. These factors provide valuable insights into the composition and management of the urban tree ecosystem in each neighbourhood. Further exploring these aspects may lead to a more comprehensive understanding of the overall  characteristics.
 <!----------------------------------------------------------------------------->
 
 # Task 2: Tidy your data
@@ -452,7 +453,7 @@ A reminder of the definition of *tidy* data:
 Based on the definition above, can you identify if your data is tidy or untidy? Go through all your columns, or if you have \>8 variables, just pick 8, and explain whether the data is untidy or tidy.
 
 <!--------------------------- Start your work below --------------------------->
-
+I think that the `vancouver_trees` data set has a tidy structure. Each row corresponds to a different tree, and each column represents a specific attribute of that tree. For instance, `tree_id` serves as a unique identifier for each tree; `civic_number`, `std_street`, `on_street`, `street_side_name`, `neighbourhood_name`, `longitude`, and `latitude` provide location details for each tree; the columns `genus_name`, `species_name`, `cultivar_name`, and `common_name` offer information about the tree's natural classification; and `height_range_id`, `diameter`, `curb`, `date_planted`, and `curb` provide details about specific characteristics of each street tree. Importantly, every value is assigned to a specific cell.
 <!----------------------------------------------------------------------------->
 
 ### 2.2 (4 points)
@@ -465,6 +466,37 @@ Be sure to explain your reasoning for this task. Show us the "before" and "after
 
 <!--------------------------- Start your work below --------------------------->
 
+As I mentioned earlier, the `vancouver_trees` dataset is tidy. Consequently, this process is split into two parts. The first part involves transforming the dataset into a untidy and the second part is about reverting it back to its original form.
+
+In the first section, the idea is to create a dataset with a pseudo JSON format embedded within a dataframe. This means that each tree will be represented as a cell, and within that cell, there will be a dataframe. The first column of this dataframe will hold the attribute name, and the second column will contain its corresponding value."
+
+```{r}
+untidy_trees <- vancouver_trees %>% 
+  mutate(row = row_number(),
+         across(tree_id:decade, as.character)) %>%  
+  pivot_longer(tree_id:decade) %>% 
+  nest_by(row)
+  
+# Now, the data set has two columns: `row` and data
+head(untidy_trees)
+
+# Inside the data cell we can find a data frame where the first column is the name of the column and the second its value.
+head(untidy_trees$data[[1]])
+```
+Now, we will rever this process. 
+
+```{r}
+tidy_trees <- untidy_trees %>% 
+  unnest(data) %>% 
+  pivot_wider(names_from = name,
+              values_from = value) %>% 
+  ungroup() %>% 
+    select(-row)
+  
+# Now, it has returned to its original form
+head(tidy_trees)
+
+```
 <!----------------------------------------------------------------------------->
 
 ### 2.3 (4 points)
@@ -498,9 +530,9 @@ Pick a research question from 1.2, and pick a variable of interest (we'll call i
 
 <!-------------------------- Start your work below ---------------------------->
 
-**Research Question**: FILL_THIS_IN
+**Research Question**: How are tree diameters distributed across neighbourhoods?
 
-**Variable of interest**: FILL_THIS_IN
+**Variable of interest**: diameters
 
 <!----------------------------------------------------------------------------->
 
@@ -515,7 +547,22 @@ Fit a model or run a hypothesis test that provides insight on this variable with
     -   You could use `lm()` to test for significance of regression coefficients.
 
 <!-------------------------- Start your work below ---------------------------->
+````{r}
+vancouver_trees
+reg <- lm(diameter ~ neighbourhood_name,
+          data = vancouver_trees)
 
+one_way <- aov(diameter ~ neighbourhood_name, data = vancouver_trees)
+
+
+one_way <- aov(diameter ~ neighbourhood_name, data = vancouver_trees)
+
+plot(one_way, 2)
+
+aov_residuals <- residuals(object = one_way)
+# Run Shapiro-Wilk test
+shapiro.test(x = sample(aov_residuals, 4000))
+```
 <!----------------------------------------------------------------------------->
 
 ## 3.2 (3 points)
@@ -542,6 +589,18 @@ Take a summary table that you made from Task 1, and write it as a csv file in yo
 -   **Reproducibility criteria**: You should be able to delete the csv file, and remake it simply by knitting this Rmd file.
 
 <!-------------------------- Start your work below ---------------------------->
+
+My reposito ries does not have an R project embedded. Consequently, the next code assumes that 
+```{r}
+
+dir.create(here("output"),
+           showWarnings = F)
+
+write_csv(root_b_count,
+          here("output", "root_b_count.csv"))
+
+
+```
 
 <!----------------------------------------------------------------------------->
 
