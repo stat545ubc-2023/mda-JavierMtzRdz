@@ -24,6 +24,7 @@ library(tidyverse)
 library(ggridges)
 library(scales)
 ```
+
 2.1  Save ploting theme
 ```{r}
 mi_tema <- function (...) {
@@ -132,6 +133,7 @@ And that is exactly the first thing that you will do!
 *Hint:* This is one of those times when you should think about the cleanliness of your analysis. I added a single code chunk for you below, but do you want to use more than one? Would you like to write more comments outside of the code chunk?
 
 <!-------------------------- Start your work below ---------------------------->
+
 ## 1. First exploration of 'vancouver_trees' --------------
 
 ```{r}
