@@ -6,7 +6,7 @@ Javier Martinez-Rodriguez
 
 ## Description
 
-This repository contains the  exploratory analysis of the `vancouver_trees` dataset sourced from The City of Vancouver's Open Data Portal. The analysis delves into various aspects of the urban street trees across different neighborhoods.
+This repository contains the exploratory analysis of the `vancouver_trees` dataset sourced from The City of Vancouver's Open Data Portal. The analysis delves into various aspects of the urban street trees across different neighborhoods.
 
 ### Repo Contents
 
@@ -37,9 +37,9 @@ This repository contains the  exploratory analysis of the `vancouver_trees` data
 install.packages("tidyverse")
 install.packages("ggridges")
 install.packages("scales")
+install.packages("ggrepel")
 install.packages("devtools")
-devtools::install_github("UBC-MDS/datateachr", 
-                          build_vignettes = TRUE)
+devtools::install_github("UBC-MDS/datateachr")
 ```
 
 #### Run the Code
