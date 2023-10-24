@@ -51,6 +51,9 @@ library(ggdist)
 library(ggridges)
 library(ggrepel)
 library(here)
+library(glm2)
+library(broom)
+
 
 # Custom functions
 mi_tema <- function (...) {
@@ -128,7 +131,7 @@ First, write out the 4 research questions you defined in milestone 1 were. This 
 
 3. How many trees have root barriers installed, and what is the distribution between neighborhoods?
 
-4. How many trees were planted in each decade, and how does this vary across neighborhoods?
+4. How many trees were planted in each decade and year, and how does this vary across neighborhoods?
 
 <!----------------------------------------------------------------------------->
 
@@ -352,7 +355,7 @@ vancouver_trees %>%
 
 ```
 
-## 4. How many trees were planted in each decade, and how does this vary across neighborhoods?
+## 4. How many trees were planted in each decade and year, and how does this vary across neighborhoods?
 
 ### Summarizing: Create a categorical variable with 3 or more groups from an existing numerical variable.
 
@@ -483,7 +486,7 @@ head(untidy_trees)
 # Inside the data cell we can find a data frame where the first column is the name of the column and the second its value.
 head(untidy_trees$data[[1]])
 ```
-Now, we will rever this process. 
+Now, we will revert this process. 
 
 ```{r}
 tidy_trees <- untidy_trees %>% 
@@ -505,15 +508,15 @@ Now, you should be more familiar with your data, and also have made progress in 
 
 <!-------------------------- Start your work below ---------------------------->
 
-1.  *FILL_THIS_IN*
-2.  *FILL_THIS_IN*
+1.  *How are tree diameters distributed across neighbourhoods?*
+2.  *How many trees were planted in each decade and year, and how does this vary across neighborhoods?*
 
 <!----------------------------------------------------------------------------->
 
 Explain your decision for choosing the above two research questions.
 
 <!--------------------------- Start your work below --------------------------->
-
+The initial questions I wrote were quite descriptive and some have been answered, at least in a fundamental sense. As a result, I have chosen these questions because they still have unresolved aspects. This will enable me to conduct further analysis in the upcoming sections.
 <!----------------------------------------------------------------------------->
 
 Now, try to choose a version of your data that you think will be appropriate to answer these 2 questions. Use between 4 and 8 functions that we've covered so far (i.e. by filtering, cleaning, tidy'ing, dropping irrelevant columns, etc.).
@@ -522,6 +525,37 @@ Now, try to choose a version of your data that you think will be appropriate to 
 
 <!--------------------------- Start your work below --------------------------->
 
+I will create two different datasets to adress every question. The reason to do so is because each variable question requires different response variables and, if I want to reduce the NA's in each variable with out drop data, I will need di
+
+```{r}
+# How are tree diameters distributed across neighbourhoods?
+diam_analysis <- vancouver_trees %>% 
+  select(diameter, neighbourhood_name,
+         on_street_block, 
+         on_street, height_range_id) %>% 
+  filter(!is.na(diameter)) %>% 
+  group_by(on_street_block, on_street, neighbourhood_name) %>% 
+  # Street names and block numbers can repead in different neighbourhoods. 
+  # To avoid problems with that, I created a variable called street_block_id
+  mutate(street_block_id = cur_group_id()) %>%
+  ungroup()
+
+diam_analysis
+
+# How many trees were planted in each decade and year, and how does this vary across neighborhoods?
+planted_analysis <- vancouver_trees %>% 
+  filter(!is.na(date_planted)) %>% 
+  mutate(year_planted = year(date_planted),
+         decade = if_else(!is.na(year_planted), # Creating decades category
+                          paste0(round(year_planted, -1), "'s"),
+                          NA)) %>% 
+  group_by(year_planted, decade, neighbourhood_name) %>% 
+  summarise(planted_trees = n()) %>% 
+  ungroup()
+
+
+```
+<!----------------------------------------------------------------------------->
 # Task 3: Modelling
 
 ## 3.0 (no points)
@@ -530,9 +564,9 @@ Pick a research question from 1.2, and pick a variable of interest (we'll call i
 
 <!-------------------------- Start your work below ---------------------------->
 
-**Research Question**: How are tree diameters distributed across neighbourhoods?
+**Research Question**: How many trees were planted in each decade and year, and how does this vary across neighborhoods?
 
-**Variable of interest**: diameters
+**Variable of interest**: Planted trees.
 
 <!----------------------------------------------------------------------------->
 
@@ -547,21 +581,19 @@ Fit a model or run a hypothesis test that provides insight on this variable with
     -   You could use `lm()` to test for significance of regression coefficients.
 
 <!-------------------------- Start your work below ---------------------------->
+
+For this section, I will estimate a Poisson regression model with interactions between `neighbourhood_name` and `decade`. 
+
 ````{r}
-vancouver_trees
-model <- lm(diameter ~ neighbourhood_name,
-          data = vancouver_trees)
 
-one_way <- aov(diameter ~ neighbourhood_name, data = vancouver_trees)
+model <- glm2(planted_trees ~ neighbourhood_name * decade,
+             data = planted_analysis,
+             family = poisson)
 
-
-one_way <- aov(diameter ~ neighbourhood_name, data = vancouver_trees)
-
-plot(one_way, 2)
-
-aov_residuals <- residuals(object = one_way)
-# Run Shapiro-Wilk test
-shapiro.test(x = sample(aov_residuals, 4000))
+ # Printing model statistical summaries
+glance(model)
+# Prin statistical summaries about each variable
+tidy(model)
 ```
 <!----------------------------------------------------------------------------->
 
@@ -574,6 +606,42 @@ Produce something relevant from your fitted model: either predictions on Y, or a
 -   Obtain your results using the `broom` package if possible. If your model is not compatible with the broom function you're needing, then you can obtain your results by some other means, but first indicate which broom function is not compatible.
 
 <!-------------------------- Start your work below ---------------------------->
+For this section, I generated a tibble containing the predicted number of trees planted in each neighborhood annually. I accomplished this using the `augment()` function along with a tibble of combinations.
+
+In the resulting tibble, pay attention to the `.fitted` column. Additionally, I've included a plot visualizing these results.
+
+```{r fig.height=6, message=TRUE, warning=FALSE, dpi=300, out.height='700px'}
+# Creating tibble of combinations of decades and neighbourhood_name
+combinations <- expand_grid(decade = unique(planted_analysis$decade),
+                            neighbourhood_name = unique(planted_analysis$neighbourhood_name))
+
+# Creating tibble of predictions based on decades and neighbourhood_name
+predictions <- augment(model, newdata = combinations)
+
+predictions
+
+predictions %>% 
+  mutate(decade = str_remove(decade, "^[:digit:]{2}"),
+         decade = factor(decade, levels = c("90's",
+                                            "00's",
+                                            "10's",
+                                            "20's"))) %>% 
+  ggplot() +
+  facet_wrap(~ neighbourhood_name) +
+  geom_col(aes(x = decade, 
+               y = .fitted),
+           fill = "#006D77") +
+  labs(title = "Predicted trees planted",
+       x = "Decade",
+       y = "Predicted # of trees planted",
+       fill = "",
+       color = "Interval range",
+       caption = element_blank()) +
+  mi_tema(legend.position = "top") 
+
+
+```
+
 
 <!----------------------------------------------------------------------------->
 

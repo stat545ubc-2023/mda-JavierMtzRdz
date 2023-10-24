@@ -68,15 +68,18 @@ Begin by loading your data, packages, and saving your own functions:
 
 ``` r
 # Packages
-library(datateachr) # <- might contain the data you picked!
+library(datateachr) 
 library(tidyverse)
 library(scales)
 library(ggdist)
 library(ggridges)
 library(ggrepel)
 library(here)
+library(glm2)
+library(broom)
 
-# Own functions
+
+# Custom functions
 mi_tema <- function (...) {
   ggplot2::theme_minimal() + 
     ggplot2::theme(text = ggplot2::element_text(family = "Lato"), 
@@ -156,8 +159,8 @@ were. This will guide your work through milestone 2:
 3.  How many trees have root barriers installed, and what is the
     distribution between neighborhoods?
 
-4.  How many trees were planted in each decade, and how does this vary
-    across neighborhoods?
+4.  How many trees were planted in each decade and year, and how does
+    this vary across neighborhoods?
 
 <!----------------------------------------------------------------------------->
 
@@ -474,7 +477,7 @@ vancouver_trees %>%
 
 <img src="mini-project-2_files/figure-gfm/unnamed-chunk-8-1.png" height="500px" />
 
-## 4. How many trees were planted in each decade, and how does this vary across neighborhoods?
+## 4. How many trees were planted in each decade and year, and how does this vary across neighborhoods?
 
 ### Summarizing: Create a categorical variable with 3 or more groups from an existing numerical variable.
 
@@ -703,7 +706,7 @@ head(untidy_trees$data[[1]])
     ## 5 species_name  Americana
     ## 6 cultivar_name BRANDON
 
-Now, we will rever this process.
+Now, we will revert this process.
 
 ``` r
 tidy_trees <- untidy_trees %>% 
@@ -743,14 +746,20 @@ analysis in the remaining tasks:
 
 <!-------------------------- Start your work below ---------------------------->
 
-1.  *FILL_THIS_IN*
-2.  *FILL_THIS_IN*
+1.  *How are tree diameters distributed across neighbourhoods?*
+2.  *How many trees were planted in each decade and year, and how does
+    this vary across neighborhoods?*
 
 <!----------------------------------------------------------------------------->
 
 Explain your decision for choosing the above two research questions.
 
 <!--------------------------- Start your work below --------------------------->
+
+The initial questions I wrote were quite descriptive and some have been
+answered, at least in a fundamental sense. As a result, I have chosen
+these questions because they still have unresolved aspects. This will
+enable me to conduct further analysis in the upcoming sections.
 <!----------------------------------------------------------------------------->
 
 Now, try to choose a version of your data that you think will be
@@ -763,6 +772,61 @@ data, one for each research question.)
 
 <!--------------------------- Start your work below --------------------------->
 
+I will create two different datasets to adress every question. The
+reason to do so is because each variable question requires different
+response variables and, if I want to reduce the NA’s in each variable
+with out drop data, I will need di
+
+``` r
+# How are tree diameters distributed across neighbourhoods?
+diam_analysis <- vancouver_trees %>% 
+  select(diameter, neighbourhood_name,
+         on_street_block, 
+         on_street, height_range_id) %>% 
+  filter(!is.na(diameter)) %>% 
+  group_by(on_street_block, on_street, neighbourhood_name) %>% 
+  # Street names and block numbers can repead in different neighbourhoods. 
+  # To avoid problems with that, I created a variable called street_block_id
+  mutate(street_block_id = cur_group_id()) %>%
+  ungroup()
+
+diam_analysis
+```
+
+    ## # A tibble: 146,611 × 6
+    ##    diameter neighbourhood_name       on_street_block on_street   height_range_id
+    ##       <dbl> <chr>                              <dbl> <chr>                 <dbl>
+    ##  1     10   Marpole                              400 W 58TH AV                 2
+    ##  2     10   Marpole                              400 W 58TH AV                 4
+    ##  3      4   Kensington-cedar cottage            4900 WINDSOR ST                3
+    ##  4     18   Kensington-cedar cottage             800 E 39TH AV                 4
+    ##  5      9   Kensington-cedar cottage            5000 WINDSOR ST                2
+    ##  6      5   Marpole                              500 W 61ST AV                 2
+    ##  7     15   Kensington-cedar cottage            4900 SHERBROOKE…               3
+    ##  8     14   Kensington-cedar cottage            4900 SHERBROOKE…               3
+    ##  9     16   Kensington-cedar cottage            4900 SHERBROOKE…               2
+    ## 10      7.5 Kensington-cedar cottage             700 E 39TH AV                 2
+    ## # ℹ 146,601 more rows
+    ## # ℹ 1 more variable: street_block_id <int>
+
+``` r
+# How many trees were planted in each decade and year, and how does this vary across neighborhoods?
+planted_analysis <- vancouver_trees %>% 
+  filter(!is.na(date_planted)) %>% 
+  mutate(year_planted = year(date_planted),
+         decade = if_else(!is.na(year_planted), # Creating decades category
+                          paste0(round(year_planted, -1), "'s"),
+                          NA)) %>% 
+  group_by(year_planted, decade, neighbourhood_name) %>% 
+  summarise(planted_trees = n()) %>% 
+  ungroup()
+```
+
+    ## `summarise()` has grouped output by 'year_planted', 'decade'. You can override
+    ## using the `.groups` argument.
+
+<!----------------------------------------------------------------------------->
+
 # Task 3: Modelling
 
 ## 3.0 (no points)
@@ -773,10 +837,10 @@ these.
 
 <!-------------------------- Start your work below ---------------------------->
 
-**Research Question**: How are tree diameters distributed across
-neighbourhoods?
+**Research Question**: How many trees were planted in each decade and
+year, and how does this vary across neighborhoods?
 
-**Variable of interest**: diameters
+**Variable of interest**: Planted trees.
 
 <!----------------------------------------------------------------------------->
 
@@ -802,55 +866,50 @@ specifics in STAT 545.
 
 <!-------------------------- Start your work below ---------------------------->
 
-``` r
-vancouver_trees
-```
-
-    ## # A tibble: 146,611 × 22
-    ##    tree_id civic_number std_street    genus_name species_name cultivar_name  
-    ##      <dbl>        <dbl> <chr>         <chr>      <chr>        <chr>          
-    ##  1  149556          494 W 58TH AV     ULMUS      Americana    BRANDON        
-    ##  2  149563          450 W 58TH AV     ZELKOVA    Serrata      <NA>           
-    ##  3  149579         4994 WINDSOR ST    STYRAX     Japonica     <NA>           
-    ##  4  149590          858 E 39TH AV     FRAXINUS   Americana    AUTUMN APPLAUSE
-    ##  5  149604         5032 WINDSOR ST    ACER       Campestre    <NA>           
-    ##  6  149616          585 W 61ST AV     PYRUS      Calleryana   CHANTICLEER    
-    ##  7  149617         4909 SHERBROOKE ST ACER       Platanoides  COLUMNARE      
-    ##  8  149618         4925 SHERBROOKE ST ACER       Platanoides  COLUMNARE      
-    ##  9  149619         4969 SHERBROOKE ST ACER       Platanoides  COLUMNARE      
-    ## 10  149625          720 E 39TH AV     FRAXINUS   Americana    AUTUMN APPLAUSE
-    ## # ℹ 146,601 more rows
-    ## # ℹ 16 more variables: common_name <chr>, assigned <chr>, root_barrier <chr>,
-    ## #   plant_area <chr>, on_street_block <dbl>, on_street <chr>,
-    ## #   neighbourhood_name <chr>, street_side_name <chr>, height_range_id <dbl>,
-    ## #   diameter <dbl>, curb <chr>, date_planted <date>, longitude <dbl>,
-    ## #   latitude <dbl>, year <dbl>, decade <chr>
+For this section, I will estimate a Poisson regression model with
+interactions between `neighbourhood_name` and `decade`.
 
 ``` r
-model <- lm(diameter ~ neighbourhood_name,
-          data = vancouver_trees)
+model <- glm2(planted_trees ~ neighbourhood_name * decade,
+             data = planted_analysis,
+             family = poisson)
 
-one_way <- aov(diameter ~ neighbourhood_name, data = vancouver_trees)
-
-
-one_way <- aov(diameter ~ neighbourhood_name, data = vancouver_trees)
-
-plot(one_way, 2)
+ # Printing model statistical summaries
+glance(model)
 ```
 
-![](mini-project-2_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+    ## Warning in warn_on_glm2(x): The supplied model object seems to be outputted
+    ## from the glm2 package. Tidiers for glm2 output are currently not maintained;
+    ## please use caution in interpreting broom output.
+
+    ## # A tibble: 1 × 8
+    ##   null.deviance df.null  logLik    AIC    BIC deviance df.residual  nobs
+    ##           <dbl>   <int>   <dbl>  <dbl>  <dbl>    <dbl>       <int> <int>
+    ## 1        42395.     670 -10793. 21762. 22159.   17490.         583   671
 
 ``` r
-aov_residuals <- residuals(object = one_way)
-# Run Shapiro-Wilk test
-shapiro.test(x = sample(aov_residuals, 4000))
+# Prin statistical summaries about each variable
+tidy(model)
 ```
 
-    ## 
-    ##  Shapiro-Wilk normality test
-    ## 
-    ## data:  sample(aov_residuals, 4000)
-    ## W = 0.62724, p-value < 2.2e-16
+    ## Warning in warn_on_glm2(x): The supplied model object seems to be outputted
+    ## from the glm2 package. Tidiers for glm2 output are currently not maintained;
+    ## please use caution in interpreting broom output.
+
+    ## # A tibble: 88 × 5
+    ##    term                                   estimate std.error statistic   p.value
+    ##    <chr>                                     <dbl>     <dbl>     <dbl>     <dbl>
+    ##  1 (Intercept)                              3.88      0.0587    66.0   0        
+    ##  2 neighbourhood_nameDowntown              -0.653     0.100     -6.50  7.87e- 11
+    ##  3 neighbourhood_nameDunbar-southlands     -0.109     0.0854    -1.28  2.01e-  1
+    ##  4 neighbourhood_nameFairview              -1.08      0.125     -8.64  5.50e- 18
+    ##  5 neighbourhood_nameGrandview-woodland     0.147     0.0802     1.84  6.62e-  2
+    ##  6 neighbourhood_nameHastings-sunrise       1.81      0.0643    28.1   7.18e-174
+    ##  7 neighbourhood_nameKensington-cedar co…   1.04      0.0684    15.2   7.25e- 52
+    ##  8 neighbourhood_nameKerrisdale            -0.564     0.0975    -5.78  7.33e-  9
+    ##  9 neighbourhood_nameKillarney              0.265     0.0781     3.39  6.87e-  4
+    ## 10 neighbourhood_nameKitsilano             -0.0280    0.0878    -0.319 7.50e-  1
+    ## # ℹ 78 more rows
 
 <!----------------------------------------------------------------------------->
 
@@ -869,6 +928,63 @@ Y, or a single value like a regression coefficient or a p-value.
   which broom function is not compatible.
 
 <!-------------------------- Start your work below ---------------------------->
+
+For this section, I generated a tibble containing the predicted number
+of trees planted in each neighborhood annually. I accomplished this
+using the `augment()` function along with a tibble of combinations.
+
+In the resulting tibble, pay attention to the `.fitted` column.
+Additionally, I’ve included a plot visualizing these results.
+
+``` r
+# Creating tibble of combinations of decades and neighbourhood_name
+combinations <- expand_grid(decade = unique(planted_analysis$decade),
+                            neighbourhood_name = unique(planted_analysis$neighbourhood_name))
+
+# Creating tibble of predictions based on decades and neighbourhood_name
+predictions <- augment(model, newdata = combinations)
+
+predictions
+```
+
+    ## # A tibble: 88 × 3
+    ##    decade neighbourhood_name       .fitted
+    ##    <chr>  <chr>                      <dbl>
+    ##  1 1990's Arbutus-ridge               3.88
+    ##  2 1990's Downtown                    3.23
+    ##  3 1990's Dunbar-southlands           3.77
+    ##  4 1990's Grandview-woodland          4.03
+    ##  5 1990's Kensington-cedar cottage    4.91
+    ##  6 1990's Kerrisdale                  3.31
+    ##  7 1990's Killarney                   4.14
+    ##  8 1990's Marpole                     3.71
+    ##  9 1990's Mount pleasant              4.73
+    ## 10 1990's Renfrew-collingwood         4.69
+    ## # ℹ 78 more rows
+
+``` r
+predictions %>% 
+  mutate(decade = str_remove(decade, "^[:digit:]{2}"),
+         decade = factor(decade, levels = c("90's",
+                                            "00's",
+                                            "10's",
+                                            "20's"))) %>% 
+  ggplot() +
+  facet_wrap(~ neighbourhood_name) +
+  geom_col(aes(x = decade, 
+               y = .fitted),
+           fill = "#006D77") +
+  labs(title = "Predicted trees planted",
+       x = "Decade",
+       y = "Predicted # of trees planted",
+       fill = "",
+       color = "Interval range",
+       caption = element_blank()) +
+  mi_tema(legend.position = "top") 
+```
+
+<img src="mini-project-2_files/figure-gfm/unnamed-chunk-15-1.png" height="700px" />
+
 <!----------------------------------------------------------------------------->
 
 # Task 4: Reading and writing data
