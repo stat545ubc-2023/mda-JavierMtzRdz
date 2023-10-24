@@ -1,4 +1,4 @@
-# mda-project-template
+# mda-project
 
 ## Author
 
