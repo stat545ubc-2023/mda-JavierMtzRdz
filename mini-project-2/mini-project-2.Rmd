@@ -44,7 +44,7 @@ Begin by loading your data, packages, and saving your own functions:
 
 ```{r, message = FALSE}
 # Packages
-library(datateachr) # <- might contain the data you picked!
+library(datateachr) 
 library(tidyverse)
 library(scales)
 library(ggdist)
@@ -52,7 +52,7 @@ library(ggridges)
 library(ggrepel)
 library(here)
 
-# Own functions
+# Custom functions
 mi_tema <- function (...) {
   ggplot2::theme_minimal() + 
     ggplot2::theme(text = ggplot2::element_text(family = "Lato"), 
@@ -549,7 +549,7 @@ Fit a model or run a hypothesis test that provides insight on this variable with
 <!-------------------------- Start your work below ---------------------------->
 ````{r}
 vancouver_trees
-reg <- lm(diameter ~ neighbourhood_name,
+model <- lm(diameter ~ neighbourhood_name,
           data = vancouver_trees)
 
 one_way <- aov(diameter ~ neighbourhood_name, data = vancouver_trees)
@@ -590,7 +590,10 @@ Take a summary table that you made from Task 1, and write it as a csv file in yo
 
 <!-------------------------- Start your work below ---------------------------->
 
-My reposito ries does not have an R project embedded. Consequently, the next code assumes that 
+My repository does not contain an R project to indicate the rood of the project. To address this, I've created a `.here` file that serves as a reference point for the root of the repository, regardless of the location of the Rmd file.
+
+Now, we can utilize the `here()` function as outlined below.
+
 ```{r}
 
 dir.create(here("output"),
@@ -598,7 +601,6 @@ dir.create(here("output"),
 
 write_csv(root_b_count,
           here("output", "root_b_count.csv"))
-
 
 ```
 
@@ -611,7 +613,13 @@ Write your model object from Task 3 to an R binary file (an RDS), and load it ag
 -   The same robustness and reproducibility criteria as in 4.1 apply here.
 
 <!-------------------------- Start your work below ---------------------------->
+```{r}
 
+saveRDS(model, file = here("output", "model.rds"))
+
+my_data <- readRDS(here("output", "model.rds"))
+
+```
 <!----------------------------------------------------------------------------->
 
 # Overall Reproducibility/Cleanliness/Coherence Checklist

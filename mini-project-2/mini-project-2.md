@@ -827,7 +827,7 @@ vancouver_trees
     ## #   latitude <dbl>, year <dbl>, decade <chr>
 
 ``` r
-reg <- lm(diameter ~ neighbourhood_name,
+model <- lm(diameter ~ neighbourhood_name,
           data = vancouver_trees)
 
 one_way <- aov(diameter ~ neighbourhood_name, data = vancouver_trees)
@@ -850,7 +850,7 @@ shapiro.test(x = sample(aov_residuals, 4000))
     ##  Shapiro-Wilk normality test
     ## 
     ## data:  sample(aov_residuals, 4000)
-    ## W = 0.73251, p-value < 2.2e-16
+    ## W = 0.62724, p-value < 2.2e-16
 
 <!----------------------------------------------------------------------------->
 
@@ -891,8 +891,12 @@ file in your `output` folder. Use the `here::here()` function.
 
 <!-------------------------- Start your work below ---------------------------->
 
-My repositories does not have an R project embedded. Consequently, the
-next code assumes that
+My repository does not contain an R project to indicate the rood of the
+project. To address this, I’ve created a `.here` file that serves as a
+reference point for the root of the repository, regardless of the
+location of the Rmd file.
+
+Now, we can utilize the `here()` function as outlined below.
 
 ``` r
 dir.create(here("output"),
@@ -913,6 +917,13 @@ Use the functions `saveRDS()` and `readRDS()`.
 - The same robustness and reproducibility criteria as in 4.1 apply here.
 
 <!-------------------------- Start your work below ---------------------------->
+
+``` r
+saveRDS(model, file = here("output", "model.rds"))
+
+my_data <- readRDS(here("output", "model.rds"))
+```
+
 <!----------------------------------------------------------------------------->
 
 # Overall Reproducibility/Cleanliness/Coherence Checklist
