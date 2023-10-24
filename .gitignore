@@ -1,0 +1,13 @@
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+
+# User-specific files
+.Ruserdata
+
+# Compiled junk
+*.o
+*.so
+*.DS_Store
